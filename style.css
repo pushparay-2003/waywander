@@ -1,0 +1,208 @@
+/* General Reset and Body Styling */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+    background-color: #f4f4f4;
+}
+
+/* Header and Navbar */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    flex-wrap: wrap;
+}
+
+header img {
+    height: 40px;
+}
+
+nav {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+nav a {
+    text-decoration: none;
+    color: #333;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+nav a:hover {
+    color: #ff5a5f;
+}
+
+/* Search Bar Styling */
+form.search-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+form.search-bar input[type="text"],
+form.search-bar select {
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+form.search-bar button {
+    background-color: #ff5a5f;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-weight: bold;
+    border-radius: 4px;
+}
+
+form.search-bar button:hover {
+    background-color: #e04e54;
+}
+
+/* Hero Section */
+.hero {
+    background-color: #f3f3f3;
+    text-align: center;
+    padding: 100px 20px;
+}
+
+.hero h1 {
+    font-size: 40px;
+    margin-bottom: 10px;
+}
+
+.hero p {
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+.hero .btn {
+    padding: 10px 25px;
+    background-color: #ff5a5f;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    text-decoration: none;
+}
+
+.hero .btn:hover {
+    background-color: #e04e54;
+}
+
+/* Sections */
+.section {
+    padding: 60px 40px;
+    text-align: center;
+}
+
+.section h2 {
+    font-size: 26px;
+    margin-bottom: 30px;
+}
+
+/* Review Section */
+.review {
+    max-width: 600px;
+    margin: 0 auto 40px;
+    text-align: center;
+}
+
+.review img {
+    height: 80px;
+    border-radius: 5px;
+}
+
+.review h3 {
+    margin-top: 10px;
+}
+
+.review p {
+    color: #555;
+}
+
+/* Footer */
+footer {
+    background-color: #333;
+    color: white;
+    padding: 40px 20px;
+    text-align: center;
+    font-family: Arial, sans-serif;
+}
+
+footer a {
+    color: #f4d03f;
+    text-decoration: none;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
+
+footer .social {
+    margin-top: 20px;
+}
+
+footer .social a {
+    margin: 0 10px;
+    color: white;
+    text-decoration: none;
+}
+
+footer .bottom {
+    margin-top: 30px;
+    font-size: 14px;
+    color: #ccc;
+}
+
+/* Wishlist and Card Items */
+.hotel-card,
+.restaurant-card,
+.attraction-card {
+    background-color: #fff;
+    padding: 20px;
+    margin-bottom: 30px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.08);
+}
+
+.hotel-card img,
+.restaurant-card img,
+.attraction-card img {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    border-radius: 6px;
+}
+
+/* Responsive Fix */
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 20px;
+    }
+
+    form.search-bar {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    nav {
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+    }
+}
