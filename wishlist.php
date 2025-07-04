@@ -33,6 +33,7 @@ if ($action === 'add') {
     $stmt = $conn->prepare("DELETE FROM wishlists WHERE user_id = ? AND item_id = ? AND item_type = ?");
     $stmt->bind_param("iis", $user_id, $item_id, $item_type);
     $stmt->execute();
+    $stmt->close();
 }
 
 // Redirect back

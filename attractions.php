@@ -1,7 +1,7 @@
 <?php
 session_start();
 include 'db.php';
-
+include 'nav.php';
 // Handle wishlist add request
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['item_id'], $_POST['item_type'])) {
     if (!isset($_SESSION['user_id'])) {
@@ -102,39 +102,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['item_id'], $_POST['it
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<!-- ✅ Navbar HTML -->
-<header>
-    <div class="logo">
-        <a href="index.php"><img src="img/logo.png" alt="waywander"></a>
-    </div>
-
-    <nav>
-        <ul class="navmenu">
-            <li><a href="index.php">Home</a></li>
-            <li><a href="hotels.php">Hotels</a></li>
-            <li><a href="attractions.php">Attractions</a></li>
-            <li><a href="resturants.php">Restaurants</a></li>
-            <li><a href="my_wishlist.php">Wishlist</a></li>
-            <li><a href="account.html">Account</a></li>
-        </ul>
-    </nav>
-
-    <!-- ✅ Search Bar -->
-    <form class="search-bar" action="search_results.php" method="GET">
-        <input type="text" name="query" placeholder="Search..." required>
-        <select name="type">
-            <option value="">All</option>
-            <option value="hotel">Hotels</option>
-            <option value="restaurant">Restaurants</option>
-            <option value="attraction">Attractions</option>
-        </select>
-        <button type="submit">Search</button>
-    </form>
-</header>
-
-    
-
 <h1>Attractions in Dhulikhel</h1>
 
 <form method="GET">
@@ -183,6 +150,40 @@ if ($result && $result->num_rows > 0) {
 
 $conn->close();
 ?>
+<?php if (isset($_GET['review_submitted'])): ?>
+<style>
+    #review-popup {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #4BB543;
+        color: white;
+        padding: 15px 25px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        font-weight: 600;
+        z-index: 10000;
+        animation: fadeInOut 4s forwards;
+        font-family: Arial, sans-serif;
+    }
+    @keyframes fadeInOut {
+        0% {opacity: 0; transform: translateY(20px);}
+        10% {opacity: 1; transform: translateY(0);}
+        90% {opacity: 1; transform: translateY(0);}
+        100% {opacity: 0; transform: translateY(20px);}
+    }
+</style>
+<div id="review-popup">
+    Review submitted successfully! It is pending approval.
+</div>
+<script>
+    setTimeout(() => {
+        const popup = document.getElementById('review-popup');
+        if (popup) popup.style.display = 'none';
+    }, 4000);
+</script>
+<?php endif; ?>
+
 
 </body>
 </html>

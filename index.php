@@ -119,7 +119,7 @@ if (session_status() === PHP_SESSION_NONE) {
 <body>
 
 <header>
-    <img src="img/logo.png" alt="waywander" />
+    <img src="images/logo.png" alt="waywander" />
     <nav>
         <a href="index.php">Home</a> <!-- Updated to .php if needed -->
         <a href="hotels.php">Hotels</a>
@@ -187,13 +187,13 @@ if (isset($_SESSION['user_id'])) {
     <h2>Featured Reviews</h2>
 
     <div class="review">
-        <img src="img/review1.jpg" alt="Review 1">
+        <img src="imgages/dhulikhel.jpg" alt="Review 1">
         <h3>Hotel Paradise</h3>
         <p>"Amazing stay! The service was exceptional and the views were breathtaking."</p>
     </div>
 
     <div class="review">
-        <img src="img/review2.jpg" alt="Review 2">
+        <img src="imges/dwarika.jpg" alt="Review 2">
         <h3>Mountain Adventure</h3>
         <p>"Perfect for thrill-seekers. An unforgettable hiking experience!"</p>
     </div>

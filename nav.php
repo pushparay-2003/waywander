@@ -119,13 +119,18 @@ if (session_status() === PHP_SESSION_NONE) {
 <body>
 
 <header>
-    <img src="img/logo.png" alt="waywander" />
+    <div class="logo">
+        <a href="index.php">
+            <img src="images/logo.png" alt="WayWander Logo">
+        </a>
+    </div>
+
     <nav>
-        <a href="index.php">Home</a> <!-- Updated to .php if needed -->
+        <a href="index.php">Home</a>
         <a href="hotels.php">Hotels</a>
         <a href="attractions.php">Attractions</a>
         <a href="resturants.php">Restaurants</a>
-        <a href="my_wishlist.php">Wishlist</a> <!-- Wishlist link -->
+        <a href="my_wishlist.php">Wishlist</a>
         <a href="account.html">Account</a>
     </nav>
 

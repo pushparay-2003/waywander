@@ -50,8 +50,8 @@ $result = $conn->query("SELECT * FROM hotels ORDER BY id DESC");
             <?php endif; ?>
         </td>
         <td>
-            <a class="btn" href="edit_hotel.php?id=<?= $row['id'] ?>">Edit</a>
-            <a class="btn btn-red" href="delete_hotel.php?id=<?= $row['id'] ?>" onclick="return confirm('Delete this hotel?')">Delete</a>
+            <a class="btn" href="edit_hotels.php?id=<?= $row['id'] ?>">Edit</a>
+            <a class="btn btn-red" href="delete_hotels.php?id=<?= $row['id'] ?>" onclick="return confirm('Delete this hotel?')">Delete</a>
         </td>
     </tr>
     <?php endwhile; ?>

@@ -1,8 +1,8 @@
 <?php
 session_start();
 include 'db.php';
+include 'nav.php';
 
-// Get search/filter parameters
 $search = isset($_GET['search']) ? $_GET['search'] : '';
 $category = isset($_GET['category']) ? $_GET['category'] : '';
 
@@ -20,16 +20,15 @@ if (!empty($category)) {
 $result = $conn->query($sql);
 ?>
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="UTF-8">
     <title>Dhulikhel Hotels | WayWander</title>
-     <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
     <style>
-        body { font-family: Arial, sans-serif; background: #f7f7f7; padding: 20px; }
+        body { font-family: Arial, sans-serif; background: #f7f7f7; }
         .hotel-card { background: #fff; border-radius: 10px; box-shadow: 0 0 8px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 40px; }
         .hotel-card img { width: 100%; max-width: 400px; height: auto; border-radius: 6px; }
         .rating { color: orange; font-size: 18px; }
@@ -42,52 +41,12 @@ $result = $conn->query($sql);
         .no-review { font-style: italic; color: #888; }
         .filter-box { background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 0 6px rgba(0,0,0,0.1); }
         .filter-box input, .filter-box select { padding: 8px; margin-right: 10px; }
+        .container { max-width: 1200px; margin: auto; padding: 20px; }
     </style>
 </head>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>WayWander</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- ✅ Correct CSS link -->
-    <link rel="stylesheet" href="style.css">
-</head>
 <body>
 
-<!-- ✅ Navbar HTML -->
-<header>
-    <div class="logo">
-        <a href="index.php"><img src="img/logo.png" alt="waywander"></a>
-    </div>
-
-    <nav>
-        <ul class="navmenu">
-            <li><a href="index.php">Home</a></li>
-            <li><a href="hotels.php">Hotels</a></li>
-            <li><a href="attractions.php">Attractions</a></li>
-            <li><a href="resturants.php">Restaurants</a></li>
-            <li><a href="my_wishlist.php">Wishlist</a></li>
-            <li><a href="account.html">Account</a></li>
-        </ul>
-    </nav>
-
-    <!-- ✅ Search Bar -->
-    <form class="search-bar" action="search_results.php" method="GET">
-        <input type="text" name="query" placeholder="Search..." required>
-        <select name="type">
-            <option value="">All</option>
-            <option value="hotel">Hotels</option>
-            <option value="restaurant">Restaurants</option>
-            <option value="attraction">Attractions</option>
-        </select>
-        <button type="submit">Search</button>
-    </form>
-</header>
-
-
-<body>
-
+<div class="container">
 <h1>Hotels in Dhulikhel</h1>
 
 <!-- Filter/Search Section -->
@@ -131,7 +90,7 @@ if ($result && $result->num_rows > 0) {
             echo "<p><a href='account.html'>Log in</a> to add to wishlist.</p>";
         }
 
-        // Reviews
+        // ✅ Reviews
         $review_sql = "SELECT * FROM reviews WHERE item_type = 'hotel' AND item_id = $hotel_id AND status = 'approved' ORDER BY created_at DESC";
         $reviews_result = $conn->query($review_sql);
 
@@ -149,7 +108,7 @@ if ($result && $result->num_rows > 0) {
             echo "<p class='no-review'>No reviews yet.</p>";
         }
 
-        // Review Form
+        // ✅ Review Form
         echo "<div class='review-form'>";
         echo "<form method='POST' action='submit_review.php'>";
         echo "<input type='hidden' name='item_type' value='hotel'>";
@@ -166,9 +125,8 @@ if ($result && $result->num_rows > 0) {
               </select>";
         echo "<label>Comment:</label><textarea name='comment' required></textarea>";
         echo "<button type='submit'>Submit Review</button>";
-        echo "</form></div>";
-
-        echo "</div></div>"; // close review-section and hotel-card
+        echo "</form></div>"; // review-form
+        echo "</div></div>"; // review-section and hotel-card
     }
 } else {
     echo "<p>No approved hotels available.</p>";
@@ -176,5 +134,39 @@ if ($result && $result->num_rows > 0) {
 $conn->close();
 ?>
 
+<!-- ✅ Pop-up Confirmation -->
+<?php if (isset($_GET['review_submitted'])): ?>
+<style>
+    #review-popup {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #4BB543;
+        color: white;
+        padding: 15px 25px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        font-weight: 600;
+        z-index: 10000;
+        animation: fadeInOut 4s forwards;
+        font-family: Arial, sans-serif;
+    }
+    @keyframes fadeInOut {
+        0% {opacity: 0; transform: translateY(20px);}
+        10% {opacity: 1; transform: translateY(0);}
+        90% {opacity: 1; transform: translateY(0);}
+        100% {opacity: 0; transform: translateY(20px);}
+    }
+</style>
+<div id="review-popup">✅ Review submitted successfully!</div>
+<script>
+    setTimeout(() => {
+        const popup = document.getElementById('review-popup');
+        if (popup) popup.style.display = 'none';
+    }, 4000);
+</script>
+<?php endif; ?>
+
+</div> <!-- end container -->
 </body>
 </html>

@@ -4,57 +4,62 @@ if (!isset($_SESSION['admin_logged_in'])) {
     header("Location: admin-login.php");
     exit();
 }
+
 include 'db.php';
 
-$result = $conn->query("SELECT * FROM restaurants ORDER BY id DESC");
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $name = $_POST["name"];
+    $rating = $_POST["rating"];
+    $category = $_POST["category"];
+    $description = $_POST["description"];
+    $image_url = $_POST["image_url"];
+
+    $stmt = $conn->prepare("INSERT INTO restaurants (name, rating, category, description, image_url, status) 
+                            VALUES (?, ?, ?, ?, ?, 'approved')");
+    $stmt->bind_param("sisss", $name, $rating, $category, $description, $image_url);
+
+    if ($stmt->execute()) {
+        $inserted_id = $stmt->insert_id;
+        $message = "Restaurant added successfully! ID: $inserted_id";
+    } else {
+        $message = "Error: " . $stmt->error;
+    }
+
+    $stmt->close();
+    $conn->close();
+}
 ?>
+
 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Manage Restaurants</title>
+    <title>Add Restaurant</title>
     <style>
-        table { width: 95%; margin: 20px auto; border-collapse: collapse; background: #fff; }
-        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
-        th { background-color: #333; color: white; }
-        img { width: 80px; height: 60px; object-fit: cover; }
-        a.btn {
-            padding: 6px 12px;
-            background: #ff5a5f;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            margin-right: 5px;
-        }
-        a.btn-red { background-color: red; }
+        <?php include '../style.css'; ?>
+        form { max-width: 500px; margin: auto; padding: 20px; background: #eee; border-radius: 10px; }
+        input, select, textarea { width: 100%; margin-top: 10px; padding: 10px; }
+        button { margin-top: 15px; padding: 10px 20px; }
     </style>
 </head>
 <body>
-<h2 style="text-align:center;">All Restaurants</h2>
+<h2 style="text-align:center;">Admin: Add Restaurant</h2>
 
-<table>
-    <tr>
-        <th>ID</th><th>Name</th><th>Rating</th><th>Category</th><th>Image</th><th>Actions</th>
-    </tr>
-    <?php while($row = $result->fetch_assoc()): ?>
-    <tr>
-        <td><?= $row['id'] ?></td>
-        <td><?= htmlspecialchars($row['name']) ?></td>
-        <td><?= $row['rating'] ?></td>
-        <td><?= htmlspecialchars($row['category']) ?></td>
-        <td>
-            <?php if (!empty($row['image_url'])): ?>
-                <img src="<?= htmlspecialchars($row['image_url']) ?>" alt="Image">
-            <?php else: ?>
-                <span>No image</span>
-            <?php endif; ?>
-        </td>
-        <td>
-            <a class="btn" href="edit_restaurant.php?id=<?= $row['id'] ?>">Edit</a>
-            <a class="btn btn-red" href="delete_restaurant.php?id=<?= $row['id'] ?>" onclick="return confirm('Delete this restaurant?')">Delete</a>
-        </td>
-    </tr>
-    <?php endwhile; ?>
-</table>
+<?php if (isset($message)) echo "<p style='text-align:center; color: green;'>$message</p>"; ?>
+
+<form method="POST">
+    <label>Name:</label><input type="text" name="name" required>
+    <label>Rating (1–5):</label>
+    <select name="rating" required>
+        <option value="">Select</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+    </select>
+    <label>Category:</label>
+    <select name="category" required>
+        <option>Budget</option><option>Rooftop</option><option>Local</option><option>Family</option><option>Romantic</option>
+    </select>
+    <label>Description:</label><textarea name="description" rows="4" required></textarea>
+    <label>Image URL:</label><input type="text" name="image_url">
+    <button type="submit">Add Restaurant</button>
+</form>
 </body>
 </html>

@@ -1,6 +1,7 @@
 <?php
 session_start();
 include 'db.php';
+include 'nav.php';
 
 // Handle wishlist add request
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['item_id'], $_POST['item_type'])) {
@@ -12,14 +13,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['item_id'], $_POST['it
     $item_id = (int)$_POST['item_id'];
     $item_type = $conn->real_escape_string($_POST['item_type']);
 
-    // Insert if not already in wishlist (ignore duplicates)
     $stmt = $conn->prepare("INSERT IGNORE INTO wishlists (user_id, item_id, item_type) VALUES (?, ?, ?)");
     $stmt->bind_param("iis", $user_id, $item_id, $item_type);
     $stmt->execute();
     $stmt->close();
 
-    // Redirect back to avoid form resubmission on reload
-    header("Location: restaurants.php");
+   header("Location: restaurants.php?wishlist_added=1");
     exit;
 }
 
@@ -30,29 +29,20 @@ $rating = isset($_GET['rating']) ? $_GET['rating'] : '';
 
 // Build SQL query
 $sql = "SELECT * FROM restaurants WHERE status = 'approved'";
-
-if ($search !== '') {
-    $sql .= " AND name LIKE '%" . $conn->real_escape_string($search) . "%'";
-}
-if ($category !== '') {
-    $sql .= " AND category = '" . $conn->real_escape_string($category) . "'";
-}
-if ($rating !== '') {
-    $sql .= " AND rating = " . intval($rating);
-}
-
+if ($search !== '') $sql .= " AND name LIKE '%" . $conn->real_escape_string($search) . "%'";
+if ($category !== '') $sql .= " AND category = '" . $conn->real_escape_string($category) . "'";
+if ($rating !== '') $sql .= " AND rating = " . intval($rating);
 $sql .= " ORDER BY id DESC";
 $result = $conn->query($sql);
-
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="UTF-8">
     <title>Dhulikhel Restaurants | WayWander</title>
-     <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
     <style>
         body { font-family: Arial, sans-serif; background: #f7f7f7; padding: 20px; }
         .restaurant-card { background: #fff; border-radius: 10px; box-shadow: 0 0 8px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 40px; display: flex; flex-wrap: wrap; gap: 20px; }
@@ -66,7 +56,6 @@ $result = $conn->query($sql);
         .review-form button { margin-top: 10px; padding: 10px; background-color: orange; border: none; color: white; cursor: pointer; }
         .search-box { margin-bottom: 30px; background: #fff; padding: 15px; border-radius: 6px; display: flex; gap: 10px; flex-wrap: wrap; }
         .search-box input, .search-box select { padding: 8px; }
-        /* Wishlist button styling */
         .wishlist-btn {
             padding: 8px 14px;
             background-color: #ff5a5f;
@@ -93,47 +82,6 @@ $result = $conn->query($sql);
     </style>
 </head>
 <body>
-    <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>WayWander</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- ✅ Correct CSS link -->
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-
-<!-- ✅ Navbar HTML -->
-<header>
-    <div class="logo">
-        <a href="index.php"><img src="img/logo.png" alt="waywander"></a>
-    </div>
-
-    <nav>
-        <ul class="navmenu">
-            <li><a href="index.php">Home</a></li>
-            <li><a href="hotels.php">Hotels</a></li>
-            <li><a href="attractions.php">Attractions</a></li>
-            <li><a href="resturants.php">Restaurants</a></li>
-            <li><a href="my_wishlist.php">Wishlist</a></li>
-            <li><a href="account.html">Account</a></li>
-        </ul>
-    </nav>
-
-    <!-- ✅ Search Bar -->
-    <form class="search-bar" action="search_results.php" method="GET">
-        <input type="text" name="query" placeholder="Search..." required>
-        <select name="type">
-            <option value="">All</option>
-            <option value="hotel">Hotels</option>
-            <option value="restaurant">Restaurants</option>
-            <option value="attraction">Attractions</option>
-        </select>
-        <button type="submit">Search</button>
-    </form>
-</header>
-
 
 <h1>Restaurants in Dhulikhel</h1>
 
@@ -172,18 +120,18 @@ if ($result && $result->num_rows > 0) {
         echo "<p>" . htmlspecialchars($row['description']) . "</p>";
         echo "</div>";
 
-        // Add to Wishlist button or login prompt
+        // ✅ Corrected Add to Wishlist form
         if ($user_id) {
-            echo "<form method='POST' style='margin-left: auto;'>";
+            echo "<form method='POST' action='wishlist.php' style='margin-left: auto;'>";
             echo "<input type='hidden' name='item_id' value='" . (int)$restaurant_id . "'>";
             echo "<input type='hidden' name='item_type' value='restaurant'>";
+            echo "<input type='hidden' name='action' value='add'>";
             echo "<button type='submit' class='wishlist-btn'>Add to Wishlist</button>";
             echo "</form>";
         } else {
             echo "<div class='login-msg'>Log in to add to wishlist</div>";
         }
 
-        // Show Reviews
         $review_sql = "SELECT * FROM reviews WHERE item_type = 'restaurant' AND item_id = $restaurant_id AND status = 'approved' ORDER BY created_at DESC";
         $reviews_result = $conn->query($review_sql);
 
@@ -202,7 +150,6 @@ if ($result && $result->num_rows > 0) {
             echo "<p class='no-review'>No reviews yet.</p>";
         }
 
-        // Review Form
         echo "<div class='review-form'>";
         echo "<form method='POST' action='submit_review.php'>";
         echo "<input type='hidden' name='item_type' value='restaurant'>";
@@ -225,9 +172,65 @@ if ($result && $result->num_rows > 0) {
 } else {
     echo "<p>No approved restaurants found.</p>";
 }
-
 $conn->close();
 ?>
+
+<!--  Review or Wishlist Popup -->
+<?php if (isset($_GET['review_submitted'])): ?>
+<style>
+#review-popup {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #4BB543;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    font-weight: 600;
+    z-index: 10000;
+    animation: fadeInOut 4s forwards;
+    font-family: Arial, sans-serif;
+}
+@keyframes fadeInOut {
+    0% {opacity: 0; transform: translateY(20px);}
+    10% {opacity: 1; transform: translateY(0);}
+    90% {opacity: 1; transform: translateY(0);}
+    100% {opacity: 0; transform: translateY(20px);}
+}
+</style>
+<div id="review-popup">✅ Review submitted successfully! It is pending approval.</div>
+<script>
+setTimeout(() => {
+    const popup = document.getElementById('review-popup');
+    if (popup) popup.style.display = 'none';
+}, 4000);
+</script>
+<?php elseif (isset($_GET['wishlist_added'])): ?>
+<style>
+#review-popup {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #0077cc;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    font-weight: 600;
+    z-index: 10000;
+    animation: fadeInOut 4s forwards;
+    font-family: Arial, sans-serif;
+}
+</style>
+<div id="review-popup">❤️ Added to wishlist!</div>
+<script>
+setTimeout(() => {
+    const popup = document.getElementById('review-popup');
+    if (popup) popup.style.display = 'none';
+}, 4000);
+</script>
+<?php endif; ?>
 
 </body>
 </html>
