@@ -3,170 +3,271 @@ session_start();
 include 'db.php';
 include 'nav.php';
 
-$search = isset($_GET['search']) ? $_GET['search'] : '';
-$category = isset($_GET['category']) ? $_GET['category'] : '';
-
-// Build SQL query with filters
-$sql = "SELECT * FROM hotels WHERE status = 'approved'";
-if (!empty($search)) {
-    $search_safe = $conn->real_escape_string($search);
-    $sql .= " AND (name LIKE '%$search_safe%' OR location LIKE '%$search_safe%')";
-}
-if (!empty($category)) {
-    $category_safe = $conn->real_escape_string($category);
-    $sql .= " AND category = '$category_safe'";
-}
-
+// Fetch hotels
+$sql = "SELECT * FROM hotels ORDER BY name ASC";
 $result = $conn->query($sql);
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Dhulikhel Hotels | WayWander</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
+    <title>Hotels</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
     <style>
-        body { font-family: Arial, sans-serif; background: #f7f7f7; }
-        .hotel-card { background: #fff; border-radius: 10px; box-shadow: 0 0 8px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 40px; }
-        .hotel-card img { width: 100%; max-width: 400px; height: auto; border-radius: 6px; }
-        .rating { color: orange; font-size: 18px; }
-        .review-section { background: #f9f9f9; padding: 15px; margin-top: 15px; border-left: 4px solid orange; border-radius: 4px; }
-        .review { padding: 8px 0; border-bottom: 1px solid #ddd; }
-        .review:last-child { border-bottom: none; }
-        .review-form { margin-top: 15px; padding-top: 10px; border-top: 1px solid #ccc; }
-        .review-form input, .review-form select, .review-form textarea { width: 100%; margin-top: 8px; padding: 8px; }
-        .review-form button { margin-top: 10px; padding: 10px; background-color: orange; border: none; color: white; cursor: pointer; }
-        .no-review { font-style: italic; color: #888; }
-        .filter-box { background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 0 6px rgba(0,0,0,0.1); }
-        .filter-box input, .filter-box select { padding: 8px; margin-right: 10px; }
-        .container { max-width: 1200px; margin: auto; padding: 20px; }
+        body {
+            background: linear-gradient(180deg, #e6f9f9 0%, #ffffff 100%);
+            font-family: 'Poppins', sans-serif;
+        }
+        /* Hero Parallax */
+        .hero {
+            background: url('images/stay.jpg') center/cover fixed;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+        }
+        .scroll-down {
+            margin-top: 20px;
+            font-size: 2rem;
+            animation: bounce 2s infinite;
+            cursor: pointer;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0);}
+            40% { transform: translateY(-10px);}
+            60% { transform: translateY(-5px);}
+        }
+
+        /* Hotel Card Styling */
+        .card {
+            height: 100%;
+            border: none;
+            border-radius: 15px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background: #fff;
+        }
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        .card-img-top {
+            height: 220px;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+        .card:hover .card-img-top {
+            transform: scale(1.05);
+        }
+        .btn-primary {
+            border-radius: 25px;
+            padding: 6px 18px;
+            background-color: #00a8a8;
+            border: none;
+        }
+        .btn-primary:hover {
+            background-color: #007f7f;
+            transform: scale(1.05);
+        }
+
+        /* Fact & Tips Cards */
+        .fact-card {
+            background: #d4f4f4;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        /* Footer */
+        footer {
+            background-color: #007f7f;
+            color: white;
+            padding: 30px 0;
+        }
+        footer a {
+            color: #d4f4f4;
+            text-decoration: none;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+        .parallax-section {
+    position: relative;
+    background-attachment: fixed;
+    background-size: cover;
+    background-position: center;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+}
+
+.overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+}
+
+.glass {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    padding: 20px;
+    border-radius: 12px;
+    color: white;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
     </style>
 </head>
 <body>
 
-<div class="container">
-<h1>Hotels in Dhulikhel</h1>
+<!-- Hero -->
+<section class="hero" data-aos="fade-in">
+    <h1 class="display-4 fw-bold">Discover Stays in Dhulikhel</h1>
+    <p class="lead">Experience comfort, culture, and breathtaking views</p>
+    <div class="scroll-down" onclick="document.getElementById('hotels-list').scrollIntoView({behavior: 'smooth'})">
+        <i class="bi bi-chevron-down"></i>
+    </div>
+</section>
 
-<!-- Filter/Search Section -->
-<div class="filter-box">
-    <form method="GET">
-        <input type="text" name="search" placeholder="Search by name or location" value="<?= htmlspecialchars($search) ?>">
-        <select name="category">
-            <option value="">All Categories</option>
-            <option value="Budget" <?= $category == "Budget" ? "selected" : "" ?>>Budget</option>
-            <option value="Luxury" <?= $category == "Luxury" ? "selected" : "" ?>>Luxury</option>
-            <option value="Resort" <?= $category == "Resort" ? "selected" : "" ?>>Resort</option>
-            <option value="Family" <?= $category == "Family" ? "selected" : "" ?>>Family</option>
-            <option value="Eco" <?= $category == "Eco" ? "selected" : "" ?>>Eco</option>
-        </select>
-        <button type="submit">Search</button>
-    </form>
+<!-- Culture Intro -->
+<div class="container my-5" data-aos="fade-up">
+    <div class="fact-card">
+        <h2>Why Dhulikhel?</h2>
+        <p>From Himalayan sunrise views to traditional Newari hospitality, Dhulikhel’s hotels are more than a stay — they’re a story.</p>
+    </div>
 </div>
 
-<?php
-if ($result && $result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        $hotel_id = $row['id'];
+<!-- Hotels Section -->
+<div class="container" id="hotels-list">
+    <div class="row g-4">
+        <?php while ($hotel = $result->fetch_assoc()): ?>
+            <div class="col-md-4" data-aos="zoom-in" data-aos-delay="150">
+                <div class="card shadow-sm">
+                    <?php if (!empty($hotel['image_url'])): ?>
+                        <img src="<?php echo htmlspecialchars($hotel['image_url']); ?>" class="card-img-top" alt="Hotel Image">
+                    <?php else: ?>
+                        <img src="images/default-hotel.jpg" class="card-img-top" alt="Default Hotel Image">
+                    <?php endif; ?>
+                    <div class="card-body">
+                        <h5 class="card-title fw-semibold"><?php echo htmlspecialchars($hotel['name']); ?></h5>
+                        <p class="card-text text-muted">
+                            <?php echo nl2br(htmlspecialchars(substr($hotel['description'], 0, 100))); ?>...
+                        </p>
+                        <p><strong>⭐ Rating:</strong> 
+                            <?php echo isset($hotel['rating']) ? htmlspecialchars($hotel['rating']) : 'No rating'; ?>/5
+                        </p>
+                        <a href="hotel_details.php?id=<?php echo $hotel['id']; ?>" class="btn btn-primary">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        <?php endwhile; ?>
+    </div>
+</div>
 
-        echo "<div class='hotel-card'>";
-        echo "<img src='" . htmlspecialchars($row['image_url']) . "' alt='Hotel Image'>";
-        echo "<h2>" . htmlspecialchars($row['name']) . "</h2>";
-        echo "<p class='rating'>Rating: " . str_repeat("★", $row['rating']) . "</p>";
-        echo "<p>Category: " . htmlspecialchars($row['category']) . "</p>";
-        echo "<p>Location: " . htmlspecialchars($row['location']) . "</p>";
-        echo "<p>" . htmlspecialchars($row['description']) . "</p>";
+<!-- PARALLAX BACKGROUND 1: Weather & Facts -->
+<section class="parallax-section" style="background-image: url('images/weather.jpg');">
+    <div class="overlay"></div>
+    <div class="container my-5 text-white">
+        <div class="row g-4">
+            <div class="col-md-4" data-aos="fade-right">
+                <div class="fact-card glass">
+                    <h4>🌤 Current Weather</h4>
+                    <p>Sunny, 22°C</p>
+                    <small>(Live API can be added)</small>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="fade-up">
+                <div class="fact-card glass">
+                    <h4>💡 Traveler Tip</h4>
+                    <p>Book sunrise-view rooms in advance — they sell out fast!</p>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="fade-left">
+                <div class="fact-card glass">
+                    <h4>📜 Did You Know?</h4>
+                    <p>Dhulikhel has been a key trade route between Nepal and Tibet for centuries.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
-        // ✅ Add to Wishlist Button
-        if (isset($_SESSION['user_id'])) {
-            echo "<form method='POST' action='wishlist.php' style='margin-top: 10px;'>";
-            echo "<input type='hidden' name='item_id' value='" . $hotel_id . "'>";
-            echo "<input type='hidden' name='item_type' value='hotel'>";
-            echo "<input type='hidden' name='action' value='add'>";
-            echo "<button type='submit' style='background-color:#ff5a5f; color:white; border:none; padding:8px 12px; border-radius:4px;'>❤️ Add to Wishlist</button>";
-            echo "</form>";
-        } else {
-            echo "<p><a href='account.html'>Log in</a> to add to wishlist.</p>";
-        }
+<!-- PARALLAX BACKGROUND 2: Traveler Blogs -->
+<section class="parallax-section" style="background-image: url('images/food.jpg');">
+    <div class="overlay"></div>
+    <div class="container my-5 text-white">
+        <h3 class="text-center mb-4 fw-bold" data-aos="fade-up">Traveler Stories</h3>
+        <div class="row g-4">
+            <div class="col-md-4" data-aos="fade-right">
+                <div class="fact-card glass">
+                    <h5>🌄 Sunrise Bliss</h5>
+                    <p>"Watching the mountains light up at dawn was pure magic."</p>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="fade-up">
+                <div class="fact-card glass">
+                    <h5>🍲 Culinary Journey</h5>
+                    <p>"The momos here are to die for — especially with spicy achar."</p>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="fade-left">
+                <div class="fact-card glass">
+                    <h5>🚶‍♂️ Nature Escape</h5>
+                    <p>"A quick trek from the hotel led us to stunning valley views."</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
-        // ✅ Reviews
-        $review_sql = "SELECT * FROM reviews WHERE item_type = 'hotel' AND item_id = $hotel_id AND status = 'approved' ORDER BY created_at DESC";
-        $reviews_result = $conn->query($review_sql);
 
-        echo "<div class='review-section'><h4>Reviews:</h4>";
-        if ($reviews_result->num_rows > 0) {
-            while ($review = $reviews_result->fetch_assoc()) {
-                echo "<div class='review'>";
-                echo "<strong>" . htmlspecialchars($review['name']) . "</strong> ";
-                echo "<small>(" . date("M d, Y", strtotime($review['created_at'])) . ")</small><br>";
-                echo "<span class='rating'>" . str_repeat("★", $review['rating']) . "</span><br>";
-                echo "<p>" . htmlspecialchars($review['comment']) . "</p>";
-                echo "</div>";
-            }
-        } else {
-            echo "<p class='no-review'>No reviews yet.</p>";
-        }
+<!-- Footer -->
+<footer>
+    <div class="container text-center">
+        <p>&copy; <?php echo date("Y"); ?> WayWander. All Rights Reserved.</p>
+        <p>
+            <a href="index.php">Home</a> | 
+            <a href="hotels.php">Hotels</a> | 
+            <a href="restaurants.php">Restaurants</a> | 
+            <a href="contact.php">Contact</a>
+        </p>
+        <p>
+            Follow us:
+            <i class="bi bi-facebook mx-1"></i>
+            <i class="bi bi-instagram mx-1"></i>
+            <i class="bi bi-twitter mx-1"></i>
+        </p>
+    </div>
+</footer>
 
-        // ✅ Review Form
-        echo "<div class='review-form'>";
-        echo "<form method='POST' action='submit_review.php'>";
-        echo "<input type='hidden' name='item_type' value='hotel'>";
-        echo "<input type='hidden' name='item_id' value='" . $hotel_id . "'>";
-        echo "<label>Your Name:</label><input type='text' name='name' required>";
-        echo "<label>Rating:</label>
-              <select name='rating' required>
-                <option value=''>Select</option>
-                <option value='1'>★☆☆☆☆</option>
-                <option value='2'>★★☆☆☆</option>
-                <option value='3'>★★★☆☆</option>
-                <option value='4'>★★★★☆</option>
-                <option value='5'>★★★★★</option>
-              </select>";
-        echo "<label>Comment:</label><textarea name='comment' required></textarea>";
-        echo "<button type='submit'>Submit Review</button>";
-        echo "</form></div>"; // review-form
-        echo "</div></div>"; // review-section and hotel-card
-    }
-} else {
-    echo "<p>No approved hotels available.</p>";
-}
-$conn->close();
-?>
-
-<!-- ✅ Pop-up Confirmation -->
-<?php if (isset($_GET['review_submitted'])): ?>
-<style>
-    #review-popup {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background: #4BB543;
-        color: white;
-        padding: 15px 25px;
-        border-radius: 8px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        font-weight: 600;
-        z-index: 10000;
-        animation: fadeInOut 4s forwards;
-        font-family: Arial, sans-serif;
-    }
-    @keyframes fadeInOut {
-        0% {opacity: 0; transform: translateY(20px);}
-        10% {opacity: 1; transform: translateY(0);}
-        90% {opacity: 1; transform: translateY(0);}
-        100% {opacity: 0; transform: translateY(20px);}
-    }
-</style>
-<div id="review-popup">✅ Review submitted successfully!</div>
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <script>
-    setTimeout(() => {
-        const popup = document.getElementById('review-popup');
-        if (popup) popup.style.display = 'none';
-    }, 4000);
+  AOS.init({
+    duration: 1000,
+    once: true
+  });
 </script>
-<?php endif; ?>
-
-</div> <!-- end container -->
+<script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script>
+    AOS.init({
+        duration: 1200,
+        once: true,
+        offset: 100
+    });
+</script>
 </body>
 </html>

@@ -3,41 +3,37 @@ session_start();
 include 'db.php';
 
 if (!isset($_SESSION['user_id'])) {
-    echo "❌ Please log in first.";
+    header("Location: login.php");
     exit();
 }
 
 $user_id = $_SESSION['user_id'];
-$item_id = $_POST['item_id'] ?? null;
-$item_type = $_POST['item_type'] ?? null;
-$action = $_POST['action'] ?? null;
 
-if (!$item_id || !$item_type || !$action) {
-    echo "❌ Missing data.";
-    exit();
-}
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $item_id = intval($_POST['item_id']);
+    $item_type = $_POST['item_type'];
+    $action = $_POST['action'];
 
-if ($action === 'add') {
-    // Avoid duplicate
-    $check = $conn->prepare("SELECT id FROM wishlists WHERE user_id = ? AND item_id = ? AND item_type = ?");
-    $check->bind_param("iis", $user_id, $item_id, $item_type);
-    $check->execute();
-    $check_result = $check->get_result();
-
-    if ($check_result->num_rows === 0) {
-        $stmt = $conn->prepare("INSERT INTO wishlists (user_id, item_id, item_type) VALUES (?, ?, ?)");
+    if ($action === 'add') {
+        $stmt = $conn->prepare("INSERT INTO wishlists (user_id, item_id, item_type, created_at) VALUES (?, ?, ?, NOW())");
         $stmt->bind_param("iis", $user_id, $item_id, $item_type);
         $stmt->execute();
+        $stmt->close();
+
+        header("Location: my_wishlist.php?message=Item added to wishlist");
+        exit();
+
+    } elseif ($action === 'remove') {
+        $stmt = $conn->prepare("DELETE FROM wishlists WHERE user_id = ? AND item_id = ? AND item_type = ?");
+        $stmt->bind_param("iis", $user_id, $item_id, $item_type);
+        $stmt->execute();
+        $stmt->close();
+
+        header("Location: my_wishlist.php");
+        exit();
     }
-} elseif ($action === 'remove') {
-    $stmt = $conn->prepare("DELETE FROM wishlists WHERE user_id = ? AND item_id = ? AND item_type = ?");
-    $stmt->bind_param("iis", $user_id, $item_id, $item_type);
-    $stmt->execute();
-    $stmt->close();
 }
 
-// Redirect back
-$redirect = $_SERVER['HTTP_REFERER'] ?? 'index.php';
-header("Location: $redirect");
+// If accessed directly
+header("Location: my_wishlist.php");
 exit();
-?>

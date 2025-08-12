@@ -41,50 +41,96 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Edit Attraction</title>
+    <title>Edit Attractions</title>
     <style>
-        form {
-            max-width: 500px;
-            margin: auto;
-            background: #f8f8f8;
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
             padding: 20px;
-            border-radius: 8px;
         }
-        input, textarea, select {
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+        input[type="text"], textarea, select, input[type="url"] {
             width: 100%;
             padding: 10px;
             margin-top: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+        input[type="file"] {
+            margin-top: 10px;
         }
         button {
-            background: #28a745;
+            background-color: #007bff;
             color: white;
-            padding: 10px;
+            padding: 10px 20px;
             border: none;
-            margin-top: 15px;
+            border-radius: 6px;
             cursor: pointer;
+            margin-top: 15px;
+        }
+        img.preview {
+            max-width: 100%;
+            height: auto;
+            margin-top: 15px;
+            border-radius: 8px;
+        }
+        /* Go back arrow styling */
+        .back-arrow {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            font-size: 20px;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+        }
+        .back-arrow:hover {
+            color: #0056b3;
         }
     </style>
 </head>
 <body>
-    <h2 style="text-align:center;">Edit Attraction</h2>
+    <div class="container">
+        <!-- Go Back Arrow -->
+        <a href="admin_attractions.php" class="back-arrow">&#8592; Back</a>
 
-    <form method="POST">
-        <label>Name:</label>
-        <input type="text" name="name" value="<?= htmlspecialchars($row['name']) ?>" required>
+        <h2>Edit Hotel</h2>
+        <form method="POST" enctype="multipart/form-data">
+            <label>Name:</label>
+            <input type="text" name="name" value="<?= htmlspecialchars($row['name']) ?>" required>
 
-        <label>Location:</label>
-        <input type="text" name="location" value="<?= htmlspecialchars($row['location']) ?>" required>
+            <label>Location:</label>
+            <input type="text" name="location" value="<?= htmlspecialchars($row['location']) ?>" required>
 
-        <label>Description:</label>
-        <textarea name="description" rows="4"><?= htmlspecialchars($row['description']) ?></textarea>
+            <label>Category:</label>
+            <input type="text" name="category" value="<?= htmlspecialchars($row['category']) ?>" required>
 
-        <label>Category:</label>
-        <input type="text" name="category" value="<?= htmlspecialchars($row['category']) ?>">
+            <label>Description:</label>
+            <textarea name="description" rows="4"><?= htmlspecialchars($row['description']) ?></textarea>
 
-        <label>Image URL:</label>
-        <input type="text" name="image_url" value="<?= htmlspecialchars($row['image_url']) ?>">
+            <label>Website URL:</label>
+            <input type="url" name="website_url" value="<?= htmlspecialchars($row['website_url']) ?>" placeholder="https://example.com">
 
-        <button type="submit">Update</button>
-    </form>
+            <label>Change Image (optional):</label>
+            <input type="file" name="image" accept="image/*">
+            <?php if (!empty($row['image_url'])): ?>
+                <img class="preview" src="<?= htmlspecialchars($row['image_url']) ?>" alt="Hotel Image">
+            <?php endif; ?>
+
+            <button type="submit">Update</button>
+        </form>
+    </div>
 </body>
 </html>

@@ -284,3 +284,40 @@ footer .bottom {
         height: auto;
     }
 }
+/* Base Theme Button */
+.btn-theme {
+    padding: 8px 14px;
+    background-color: #007BFF;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    display: inline-block;
+    margin-top: 8px;
+    border: none;
+    cursor: pointer;
+}
+
+/* Hover effect */
+.btn-theme:hover {
+    background-color: #0056b3;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Visit Website Modifier */
+.btn-visit {
+    background-color: #28a745; /* Green */
+}
+.btn-visit:hover {
+    background-color: #1e7e34;
+}
+
+/* Login Modifier */
+.btn-login {
+    background-color: #ffc107; /* Yellow */
+    color: #212529;
+}
+.btn-login:hover {
+    background-color: #e0a800;
+}

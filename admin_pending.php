@@ -20,53 +20,81 @@ function handleAction($conn, $table) {
 handleAction($conn, 'restaurants');
 handleAction($conn, 'hotels');
 handleAction($conn, 'attractions');
-?>
 
+function renderPending($conn, $table) {
+    $result = $conn->query("SELECT * FROM $table WHERE status = 'pending'");
+
+    echo "<h2 style='text-align:center; margin-top:40px;'>Pending " . ucfirst($table) . "</h2>";
+
+    if ($result->num_rows > 0) {
+        echo "<table style='width:95%; margin:20px auto; border-collapse:collapse; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,0.1);'>
+                <tr style='background:#007bff; color:white;'>
+                    <th style='padding:10px; border:1px solid #ccc;'>ID</th>
+                    <th style='padding:10px; border:1px solid #ccc;'>Name</th>
+                    <th style='padding:10px; border:1px solid #ccc;'>Location</th>
+                    <th style='padding:10px; border:1px solid #ccc;'>Category</th>
+                    <th style='padding:10px; border:1px solid #ccc;'>Image</th>
+                    <th style='padding:10px; border:1px solid #ccc;'>Actions</th>
+                </tr>";
+
+        while ($row = $result->fetch_assoc()) {
+            echo "<tr>
+                    <td style='padding:10px; border:1px solid #ccc;'>{$row['id']}</td>
+                    <td style='padding:10px; border:1px solid #ccc;'>" . htmlspecialchars($row['name']) . "</td>
+                    <td style='padding:10px; border:1px solid #ccc;'>" . htmlspecialchars($row['location']) . "</td>
+                    <td style='padding:10px; border:1px solid #ccc;'>" . htmlspecialchars($row['category']) . "</td>
+                    <td style='padding:10px; border:1px solid #ccc; text-align:center;'>";
+                        if (!empty($row['image_url'])) {
+                            echo "<img src='" . htmlspecialchars($row['image_url']) . "' alt='Image' style='width:80px; height:60px; object-fit:cover; border-radius:4px;'>";
+                        } else {
+                            echo "<span style='color:#999;'>No image</span>";
+                        }
+            echo    "</td>
+                    <td style='padding:10px; border:1px solid #ccc; text-align:center;'>
+                        <form method='post' style='display:inline;'>
+                            <input type='hidden' name='id' value='{$row['id']}'>
+                            <button name='approve' style='background:#28a745; color:white; padding:6px 12px; border:none; border-radius:4px; cursor:pointer;'>Approve</button>
+                        </form>
+                        <form method='post' style='display:inline;'>
+                            <input type='hidden' name='id' value='{$row['id']}'>
+                            <button name='reject' style='background:#dc3545; color:white; padding:6px 12px; border:none; border-radius:4px; cursor:pointer;'>Reject</button>
+                        </form>
+                    </td>
+                </tr>";
+        }
+
+        echo "</table>";
+    } else {
+        echo "<p style='text-align:center; color:#666;'>No pending $table found.</p>";
+    }
+}
+?>
 <!DOCTYPE html>
 <html>
 <head>
     <title>Pending Approvals</title>
     <style>
-        body { font-family: Arial; margin: 20px; }
-        h2 { margin-top: 30px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 8px; border: 1px solid #ccc; }
-        form { display: inline; }
-        button { padding: 4px 8px; }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align:center;
+            color: #333;
+            margin-bottom: 30px;
+        }
     </style>
 </head>
 <body>
 
-<h1>Admin Panel - Pending Items</h1>
+<h1>Admin Panel - Pending Approvals</h1>
 
 <?php
-function renderPending($conn, $table) {
-    $result = $conn->query("SELECT * FROM $table WHERE status = 'pending'");
-    echo "<h2>Pending " . ucfirst($table) . "</h2>";
-    if ($result->num_rows > 0) {
-        echo "<table><tr><th>ID</th><th>Name</th><th>Actions</th></tr>";
-        while ($row = $result->fetch_assoc()) {
-            echo "<tr>
-                <td>{$row['id']}</td>
-                <td>{$row['name']}</td>
-                <td>
-                    <form method='post'><input type='hidden' name='id' value='{$row['id']}'>
-                        <button name='approve'>Approve</button>
-                        <button name='reject'>Reject</button>
-                    </form>
-                </td>
-            </tr>";
-        }
-        echo "</table>";
-    } else {
-        echo "<p>No pending $table found.</p>";
-    }
-}
-
 renderPending($conn, 'restaurants');
 renderPending($conn, 'hotels');
 renderPending($conn, 'attractions');
-
 $conn->close();
 ?>
 

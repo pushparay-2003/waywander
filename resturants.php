@@ -3,234 +3,246 @@ session_start();
 include 'db.php';
 include 'nav.php';
 
-// Handle wishlist add request
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['item_id'], $_POST['item_type'])) {
-    if (!isset($_SESSION['user_id'])) {
-        echo "<p>Please log in to add items to your wishlist.</p>";
-        exit;
-    }
-    $user_id = $_SESSION['user_id'];
-    $item_id = (int)$_POST['item_id'];
-    $item_type = $conn->real_escape_string($_POST['item_type']);
-
-    $stmt = $conn->prepare("INSERT IGNORE INTO wishlists (user_id, item_id, item_type) VALUES (?, ?, ?)");
-    $stmt->bind_param("iis", $user_id, $item_id, $item_type);
-    $stmt->execute();
-    $stmt->close();
-
-   header("Location: restaurants.php?wishlist_added=1");
-    exit;
-}
-
-// Get filters
-$search = isset($_GET['search']) ? trim($_GET['search']) : '';
-$category = isset($_GET['category']) ? $_GET['category'] : '';
-$rating = isset($_GET['rating']) ? $_GET['rating'] : '';
-
-// Build SQL query
-$sql = "SELECT * FROM restaurants WHERE status = 'approved'";
-if ($search !== '') $sql .= " AND name LIKE '%" . $conn->real_escape_string($search) . "%'";
-if ($category !== '') $sql .= " AND category = '" . $conn->real_escape_string($category) . "'";
-if ($rating !== '') $sql .= " AND rating = " . intval($rating);
-$sql .= " ORDER BY id DESC";
+// Fetch restaurants
+$sql = "SELECT * FROM restaurants ORDER BY name ASC";
 $result = $conn->query($sql);
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Dhulikhel Restaurants | WayWander</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
+    <title>Restaurants</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
     <style>
-        body { font-family: Arial, sans-serif; background: #f7f7f7; padding: 20px; }
-        .restaurant-card { background: #fff; border-radius: 10px; box-shadow: 0 0 8px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 40px; display: flex; flex-wrap: wrap; gap: 20px; }
-        .restaurant-card img { width: 100%; max-width: 400px; height: auto; border-radius: 6px; }
-        .restaurant-info { flex: 1; min-width: 300px; }
-        .rating { color: orange; font-size: 18px; }
-        .review-section { background: #f9f9f9; padding: 15px; margin-top: 15px; border-left: 4px solid orange; border-radius: 4px; width: 100%; }
-        .review { padding: 8px 0; border-bottom: 1px solid #ddd; }
-        .review:last-child { border-bottom: none; }
-        .review-form input, .review-form select, .review-form textarea { width: 100%; margin-top: 8px; padding: 8px; }
-        .review-form button { margin-top: 10px; padding: 10px; background-color: orange; border: none; color: white; cursor: pointer; }
-        .search-box { margin-bottom: 30px; background: #fff; padding: 15px; border-radius: 6px; display: flex; gap: 10px; flex-wrap: wrap; }
-        .search-box input, .search-box select { padding: 8px; }
-        .wishlist-btn {
-            padding: 8px 14px;
-            background-color: #ff5a5f;
+        /* Parallax Hero */
+        .hero {
+            position: relative;
+            background-image: url('images/hotel.jpg'); /* Replace with your hotel image */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            height: 90vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: white;
+            text-align: center;
+        }
+        .hero-overlay {
+            background: rgba(0,0,0,0.4);
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+        }
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+        .scroll-down {
+            position: absolute;
+            bottom: 20px;
+            font-size: 2rem;
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Cards */
+        .card {
             border: none;
-            border-radius: 5px;
-            cursor: pointer;
+            border-radius: 15px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+        .card-img-top {
+            height: 220px;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+        .card:hover .card-img-top {
+            transform: scale(1.05);
+        }
+
+        /* Sections */
+        section {
+            padding: 60px 0;
+        }
+        .section-title {
             font-weight: bold;
-            align-self: flex-start;
-            height: 40px;
-            margin-left: auto;
+            margin-bottom: 40px;
+            text-align: center;
         }
-        .wishlist-btn:disabled {
-            background-color: #ccc;
-            cursor: default;
+
+        /* Footer */
+        footer {
+            background: #111;
+            color: #ccc;
+            padding-top: 50px;
         }
-        .login-msg {
-            margin-left: auto;
-            color: #999;
-            font-style: italic;
-            align-self: center;
-            height: 40px;
-        }
+        footer a { color: #ccc; }
+        footer a:hover { color: white; }
+        /* Smooth scroll between sections */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Optional: Subtle fade when scrolling */
+[data-aos] {
+    transition: all 0.8s ease;
+}
+
+/* Parallax overlay effect */
+.parallax-food, .parallax-food2 {
+    position: relative;
+}
+
+.parallax-food::before, .parallax-food2::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.3);
+}
+
     </style>
 </head>
 <body>
 
-<h1>Restaurants in Dhulikhel</h1>
+<!-- Hero -->
+<div class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-content" data-aos="zoom-in" data-aos-duration="1200">
+        <h1 class="display-4 fw-bold">Discover Dhulikhel's Flavors</h1>
+        <p class="lead">From street-side delicacies to fine dining under the Himalayas</p>
+    </div>
+    <a href="#restaurants" class="scroll-down text-white"><i class="bi bi-chevron-double-down"></i></a>
+</div>
 
-<!-- Search/Filter Form -->
-<form method="GET" class="search-box">
-    <input type="text" name="search" placeholder="Search by name" value="<?= htmlspecialchars($search) ?>">
-    <select name="category">
-        <option value="">All Categories</option>
-        <option value="Budget" <?= $category === 'Budget' ? 'selected' : '' ?>>Budget</option>
-        <option value="Rooftop" <?= $category === 'Rooftop' ? 'selected' : '' ?>>Rooftop</option>
-        <option value="Local" <?= $category === 'Local' ? 'selected' : '' ?>>Local</option>
-        <option value="Family" <?= $category === 'Family' ? 'selected' : '' ?>>Family</option>
-        <option value="Romantic" <?= $category === 'Romantic' ? 'selected' : '' ?>>Romantic</option>
-    </select>
-    <select name="rating">
-        <option value="">All Ratings</option>
-        <?php for ($i = 1; $i <= 5; $i++): ?>
-            <option value="<?= $i ?>" <?= $rating == $i ? 'selected' : '' ?>><?= $i ?> ★</option>
-        <?php endfor; ?>
-    </select>
-    <button type="submit">Search</button>
-</form>
+<!-- Restaurants Section -->
+<section id="restaurants" class="bg-light">
+    <h2 class="section-title" data-aos="fade-up">🍽 Featured Restaurants</h2>
+    <div class="container">
+        <div class="row g-4">
+            <?php while ($restaurant = $result->fetch_assoc()): ?>
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                    <div class="card shadow-sm">
+                        <?php if (!empty($restaurant['image_url'])): ?>
+                            <img src="<?php echo htmlspecialchars($restaurant['image_url']); ?>" class="card-img-top" alt="Restaurant Image">
+                        <?php else: ?>
+                            <img src="images/default-restaurant.jpg" class="card-img-top" alt="Default Restaurant Image">
+                        <?php endif; ?>
+                        <div class="card-body">
+                            <h5 class="card-title fw-semibold"><?php echo htmlspecialchars($restaurant['name']); ?></h5>
+                            <p class="card-text text-muted">
+                                <?php echo nl2br(htmlspecialchars(substr($restaurant['description'], 0, 100))); ?>...
+                            </p>
+                            <p><strong>⭐ Rating:</strong> 
+                                <?php echo isset($restaurant['rating']) ? htmlspecialchars($restaurant['rating']) : 'No rating'; ?>/5
+                            </p>
+                            <a href="restaurant_details.php?id=<?php echo $restaurant['id']; ?>" class="btn btn-primary">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            <?php endwhile; ?>
+        </div>
+    </div>
+</section>
 
-<?php
-$user_id = $_SESSION['user_id'] ?? null;
+<!-- Blog Section with Parallax Background -->
+<section 
+    class="parallax-food" 
+    style="background-image: url('images/newari food.jpg'); background-attachment: fixed; background-size: cover; background-position: center; color: white; padding: 60px 0;">
+    <div class="container" style="background: rgba(0,0,0,0.4); border-radius: 10px; padding: 30px;">
+        <h2 class="section-title text-center" data-aos="fade-up">📝 From Our Travelers</h2>
+        <div class="row g-4">
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="card shadow h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Best Thakali Experience</h5>
+                        <p class="text-muted">"The Thakali set here was unforgettable! Perfectly cooked lentils and crispy gundruk."</p>
+                        <small>- Anisha K.</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="card shadow h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Hidden Tea House</h5>
+                        <p class="text-muted">"Found a small tea house with the best masala chai and stunning mountain view."</p>
+                        <small>- John D.</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+                <div class="card shadow h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Nepali Momos Love</h5>
+                        <p class="text-muted">"Soft and juicy momos with tangy achar - absolutely the best in town!"</p>
+                        <small>- Priya S.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
-if ($result && $result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        $restaurant_id = $row['id'];
-        echo "<div class='restaurant-card'>";
-        echo "<img src='" . htmlspecialchars($row['image_url']) . "' alt='Restaurant Image'>";
-        echo "<div class='restaurant-info'>";
-        echo "<h2>" . htmlspecialchars($row['name']) . "</h2>";
-        echo "<p class='rating'>Rating: " . str_repeat("★", $row['rating']) . "</p>";
-        echo "<p>Category: " . htmlspecialchars($row['category']) . "</p>";
-        echo "<p>" . htmlspecialchars($row['description']) . "</p>";
-        echo "</div>";
+<!-- Traditions & Experiences with Parallax Background -->
+<section 
+    class="parallax-food2" 
+    style="background-image: url('images/traditions.jpg'); background-attachment: fixed; background-size: cover; background-position: center; padding: 60px 0; color: white;">
+    <div class="container text-center" style="background: rgba(0,0,0,0.4); padding: 30px; border-radius: 10px;" data-aos="fade-up">
+        <h2 class="section-title">🌸 Culture & People</h2>
+        <p class="lead">Dhulikhel isn't just about food, it's about the stories, the smiles, and the shared meals. From traditional Newari feasts to festival gatherings, every bite is a part of our heritage.</p>
+    </div>
+</section>
 
-        // ✅ Corrected Add to Wishlist form
-        if ($user_id) {
-            echo "<form method='POST' action='wishlist.php' style='margin-left: auto;'>";
-            echo "<input type='hidden' name='item_id' value='" . (int)$restaurant_id . "'>";
-            echo "<input type='hidden' name='item_type' value='restaurant'>";
-            echo "<input type='hidden' name='action' value='add'>";
-            echo "<button type='submit' class='wishlist-btn'>Add to Wishlist</button>";
-            echo "</form>";
-        } else {
-            echo "<div class='login-msg'>Log in to add to wishlist</div>";
-        }
 
-        $review_sql = "SELECT * FROM reviews WHERE item_type = 'restaurant' AND item_id = $restaurant_id AND status = 'approved' ORDER BY created_at DESC";
-        $reviews_result = $conn->query($review_sql);
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row text-center text-md-start">
+            <div class="col-md-4 mb-3">
+                <h5 class="fw-bold text-white">WayWander</h5>
+                <p>Your guide to exploring the best hotels, restaurants, and attractions in Dhulikhel.</p>
+            </div>
+            <div class="col-md-4 mb-3">
+                <h5 class="fw-bold text-white">Quick Links</h5>
+                <ul class="list-unstyled">
+                    <li><a href="index.php">Home</a></li>
+                    <li><a href="hotels.php">Hotels</a></li>
+                    <li><a href="restaurants.php">Restaurants</a></li>
+                    <li><a href="attractions.php">Attractions</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4 mb-3">
+                <h5 class="fw-bold text-white">Follow Us</h5>
+                <a href="#" class="me-3"><i class="bi bi-facebook"></i></a>
+                <a href="#" class="me-3"><i class="bi bi-instagram"></i></a>
+                <a href="#"><i class="bi bi-twitter"></i></a>
+            </div>
+        </div>
+        <hr class="border-secondary">
+        <div class="text-center small">&copy; <?php echo date('Y'); ?> WayWander. All rights reserved.</div>
+    </div>
+</footer>
 
-        echo "<div class='review-section'>";
-        echo "<h4>Reviews:</h4>";
-        if ($reviews_result && $reviews_result->num_rows > 0) {
-            while ($review = $reviews_result->fetch_assoc()) {
-                echo "<div class='review'>";
-                echo "<strong>" . htmlspecialchars($review['name']) . "</strong> ";
-                echo "<small>(" . date("M d, Y", strtotime($review['created_at'])) . ")</small><br>";
-                echo "<span class='rating'>" . str_repeat("★", $review['rating']) . "</span><br>";
-                echo "<p>" . htmlspecialchars($review['comment']) . "</p>";
-                echo "</div>";
-            }
-        } else {
-            echo "<p class='no-review'>No reviews yet.</p>";
-        }
-
-        echo "<div class='review-form'>";
-        echo "<form method='POST' action='submit_review.php'>";
-        echo "<input type='hidden' name='item_type' value='restaurant'>";
-        echo "<input type='hidden' name='item_id' value='" . $restaurant_id . "'>";
-        echo "<label>Your Name:</label><input type='text' name='name' required>";
-        echo "<label>Rating:</label><select name='rating' required>
-                <option value=''>Select</option>
-                <option value='1'>★☆☆☆☆</option>
-                <option value='2'>★★☆☆☆</option>
-                <option value='3'>★★★☆☆</option>
-                <option value='4'>★★★★☆</option>
-                <option value='5'>★★★★★</option>
-              </select>";
-        echo "<label>Comment:</label><textarea name='comment' required></textarea>";
-        echo "<button type='submit'>Submit Review</button>";
-        echo "</form></div>";
-
-        echo "</div></div>"; // End review-section and restaurant-card
-    }
-} else {
-    echo "<p>No approved restaurants found.</p>";
-}
-$conn->close();
-?>
-
-<!--  Review or Wishlist Popup -->
-<?php if (isset($_GET['review_submitted'])): ?>
-<style>
-#review-popup {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: #4BB543;
-    color: white;
-    padding: 15px 25px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    font-weight: 600;
-    z-index: 10000;
-    animation: fadeInOut 4s forwards;
-    font-family: Arial, sans-serif;
-}
-@keyframes fadeInOut {
-    0% {opacity: 0; transform: translateY(20px);}
-    10% {opacity: 1; transform: translateY(0);}
-    90% {opacity: 1; transform: translateY(0);}
-    100% {opacity: 0; transform: translateY(20px);}
-}
-</style>
-<div id="review-popup">✅ Review submitted successfully! It is pending approval.</div>
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
 <script>
-setTimeout(() => {
-    const popup = document.getElementById('review-popup');
-    if (popup) popup.style.display = 'none';
-}, 4000);
+    AOS.init({
+        once: true,
+        duration: 1000
+    });
 </script>
-<?php elseif (isset($_GET['wishlist_added'])): ?>
-<style>
-#review-popup {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: #0077cc;
-    color: white;
-    padding: 15px 25px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    font-weight: 600;
-    z-index: 10000;
-    animation: fadeInOut 4s forwards;
-    font-family: Arial, sans-serif;
-}
-</style>
-<div id="review-popup">❤️ Added to wishlist!</div>
-<script>
-setTimeout(() => {
-    const popup = document.getElementById('review-popup');
-    if (popup) popup.style.display = 'none';
-}, 4000);
-</script>
-<?php endif; ?>
-
 </body>
 </html>

@@ -95,11 +95,7 @@ if (!isset($_SESSION['admin_logged_in'])) {
             <a href="admin_attractions.php">View/Edit</a><br>
             <a href="add_attractions.php">Add New</a>
         </div>
-        <div class="card">
-            <h3>Pending Submissions</h3>
-            <a href="admin_pending.php">Approve/Reject</a>
-        </div>
-        <div class="card">
+                <div class="card">
             <h3>Manage Reviews</h3>
             <a href="admin_reviews.php">View/Delete</a>
         </div>

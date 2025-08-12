@@ -31,10 +31,22 @@ $result = $conn->query("SELECT * FROM hotels ORDER BY id DESC");
 </head>
 <body>
 <h2 style="text-align:center;">All Hotels</h2>
+ <!-- Go Back Arrow -->
+    <div style="position: absolute; top: 20px; left: 20px;">
+        <a href="javascript:history.back()" style="text-decoration: none; font-size: 24px; color: #333;">
+            &#8592;
+        </a>
+    </div>
 
 <table>
     <tr>
-        <th>ID</th><th>Name</th><th>Location</th><th>Category</th><th>Image</th><th>Actions</th>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Location</th>
+        <th>Category</th>
+        <th>Image</th>
+        <th>Website</th>
+        <th>Actions</th>
     </tr>
     <?php while($row = $result->fetch_assoc()): ?>
     <tr>
@@ -47,6 +59,13 @@ $result = $conn->query("SELECT * FROM hotels ORDER BY id DESC");
                 <img src="<?= htmlspecialchars($row['image_url']) ?>" alt="Hotel Image">
             <?php else: ?>
                 <span>No image</span>
+            <?php endif; ?>
+        </td>
+        <td>
+            <?php if (!empty($row['website_url'])): ?>
+                <a href="<?= htmlspecialchars($row['website_url']) ?>" target="_blank">Visit Site</a>
+            <?php else: ?>
+                <span>No website</span>
             <?php endif; ?>
         </td>
         <td>

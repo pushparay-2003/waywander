@@ -11,20 +11,47 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $name = $_POST["name"];
     $location = $_POST["location"];
     $category = $_POST["category"];
-    $rating = $_POST["rating"];
     $description = $_POST["description"];
-    $image_url = $_POST["image_url"];
 
-    $stmt = $conn->prepare("INSERT INTO hotels (name, location, category, rating, description, image_url, status) VALUES (?, ?, ?, ?, ?, ?, 'approved')");
-    $stmt->bind_param("sssiss", $name, $location, $category, $rating, $description, $image_url);
-
-    if ($stmt->execute()) {
-        $message = "Hotel added successfully!";
-    } else {
-        $message = "Error: " . $stmt->error;
+    // Image upload handling
+    $target_dir = "uploads/";
+    if (!is_dir($target_dir)) {
+        mkdir($target_dir, 0777, true);
     }
 
-    $stmt->close();
+    $image_path = "";
+    if (isset($_FILES["image_file"]) && $_FILES["image_file"]["error"] === UPLOAD_ERR_OK) {
+        $file_tmp = $_FILES["image_file"]["tmp_name"];
+        $file_name = basename($_FILES["image_file"]["name"]);
+        $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+
+        $allowed_types = ["jpg", "jpeg", "png", "gif"];
+        if (in_array($file_ext, $allowed_types)) {
+            $new_filename = uniqid("hotel_", true) . "." . $file_ext;
+            $target_file = $target_dir . $new_filename;
+
+            if (move_uploaded_file($file_tmp, $target_file)) {
+                $image_path = $target_file;
+            } else {
+                $message = "Error uploading the image.";
+            }
+        } else {
+            $message = "Invalid file type. Only JPG, JPEG, PNG & GIF allowed.";
+        }
+    }
+
+    if (!empty($image_path)) {
+        $stmt = $conn->prepare("INSERT INTO hotels (name, location, category, description, image_url, status) VALUES (?, ?, ?, ?, ?, 'approved')");
+        $stmt->bind_param("sssss", $name, $location, $category, $description, $image_path);
+
+        if ($stmt->execute()) {
+            $message = "✅ Hotel added successfully!";
+        } else {
+            $message = "❌ Error: " . $stmt->error;
+        }
+        $stmt->close();
+    }
+
     $conn->close();
 }
 ?>
@@ -33,30 +60,87 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <html>
 <head>
     <title>Add Hotel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        <?php include '../style.css'; ?>
-        form { max-width: 500px; margin: auto; padding: 20px; background: #eee; border-radius: 10px; }
-        input, select, textarea { width: 100%; margin-top: 10px; padding: 10px; }
-        button { margin-top: 15px; padding: 10px 20px; }
+        body {
+            background-color: #f8f9fa;
+        }
+        .card {
+            margin-top: 50px;
+        }
+        .back-arrow {
+            font-size: 1.5rem;
+            text-decoration: none;
+            color: #000;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+        .back-arrow:hover {
+            color: #0d6efd;
+        }
     </style>
 </head>
 <body>
-<h2 style="text-align:center;">Admin: Add Hotel</h2>
 
-<?php if (isset($message)) echo "<p style='text-align:center; color: green;'>$message</p>"; ?>
+<?php include 'admin_nav.php'; ?> <!-- Navbar for navigation -->
 
-<form method="POST">
-    <label>Name:</label><input type="text" name="name" required>
-    <label>Location:</label><input type="text" name="location" required>
-    <label>Category:</label>
-    <select name="category" required>
-        <option>Budget</option><option>Luxury</option><option>Family</option><option>Business</option><option>Resort</option>
-    </select>
-    <label>Rating (1–5):</label>
-    <select name="rating" required><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
-    <label>Description:</label><textarea name="description" rows="4" required></textarea>
-    <label>Image URL:</label><input type="text" name="image_url">
-    <button type="submit">Add Hotel</button>
-</form>
+<div class="container">
+    <a href="javascript:history.back()" class="back-arrow">&larr; </a> <!-- Back arrow -->
+
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4>Add New Hotel</h4>
+                </div>
+                <div class="card-body">
+                    <?php if (isset($message)): ?>
+                        <div class="alert alert-info text-center"><?php echo $message; ?></div>
+                    <?php endif; ?>
+
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label class="form-label">Hotel Name</label>
+                            <input type="text" name="name" class="form-control" placeholder="Enter hotel name" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Location</label>
+                            <input type="text" name="location" class="form-control" placeholder="Enter location" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <select name="category" class="form-select" required>
+                                <option value="">Select category</option>
+                                <option>Budget</option>
+                                <option>Luxury</option>
+                                <option>Family</option>
+                                <option>Business</option>
+                                <option>Resort</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control" rows="4" placeholder="Enter hotel description" required></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Upload Image</label>
+                            <input type="file" name="image_file" class="form-control" accept="image/*" required>
+                        </div>
+
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-success px-4">Add Hotel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
